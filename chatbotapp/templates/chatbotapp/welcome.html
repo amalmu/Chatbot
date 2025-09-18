@@ -1,0 +1,19 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome</title>
+  <link rel="stylesheet" href="{% static 'chatbotapp/css/welcome.css' %}">
+</head>
+<body>
+  <div class="container">
+    <h1 class="fade-in">Welcome to Gemini Chatbot</h1>
+    <p class="fade-in delay-1">Your AI-powered assistant is ready to chat with you.</p>
+    <button id="start-btn" class="fade-in delay-2">Start Chatting</button>
+  </div>
+  <script src="{% static 'chatbotapp/js/welcome.js' %}"></script>
+</body>
+</html>
+

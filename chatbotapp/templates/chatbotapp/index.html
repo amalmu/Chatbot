@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gemini Chatbot</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color:darkslategray; 
+            display:flex; 
+            justify-content:center; 
+            align-items:center; 
+            height:100vh; 
+            margin:0; 
+        }
+        #chat-container { 
+            background:#333; 
+            width:400px;    
+            max-width:90%; 
+            padding:20px; 
+            border-radius:15px; 
+            box-shadow:0 10px 30px rgba(0,0,0,0.5); 
+        }
+        #chat-box { 
+            height:400px; 
+            overflow-y:auto; 
+            border:1px solid #444; 
+            padding:10px; 
+            border-radius:10px; 
+            margin-bottom:10px; 
+            background:#1a1a1a;
+            color:#fff;
+        }
+        .user { 
+            text-align:right; 
+            color:#57a6ff; 
+            margin:5px 0; 
+        }
+        .bot { 
+            text-align:left; 
+            color:#f1f1f1; 
+            margin:5px 0; 
+        }
+        .typing { 
+            font-style: italic; 
+            color: #aaa; 
+        }
+        input { 
+            width:70%; 
+            padding:10px; 
+            border-radius:5px; 
+            border:1px solid #444; 
+            background:#333; 
+            color:#fff;
+            margin-right:5%;
+        }
+        button { 
+            width:20%; 
+            padding:10px; 
+            border:none; 
+            background:#57a6ff; 
+            color:white; 
+            border-radius:5px; 
+            cursor:pointer; 
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-box"></div>
+        <input type="text" id="user-input" placeholder="Type your message..." />
+        <button id="send-btn">Send</button>
+    </div>
+
+    <script>
+        function getCSRFToken() {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, 10) === 'csrftoken=') {
+                        cookieValue = decodeURIComponent(cookie.substring(10));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const input = document.getElementById("user-input");
+            const chatBox = document.getElementById("chat-box");
+            const sendBtn = document.getElementById("send-btn");
+
+            async function sendMessage() {
+                const message = input.value.trim();
+                if (!message) return;
+
+                
+                const userDiv = document.createElement("div");
+                userDiv.classList.add("user");
+                userDiv.textContent = message;
+                chatBox.appendChild(userDiv);
+                input.value = '';
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+                
+                const typingDiv = document.createElement("div");
+                typingDiv.classList.add("bot", "typing");
+                typingDiv.textContent = "Gemini is typing...";
+                chatBox.appendChild(typingDiv);
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+                try {
+                    const response = await fetch('/chatbot/response/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCSRFToken(),
+                        },
+                        body: JSON.stringify({ prompt: message })
+                    });
+
+                    const data = await response.json();
+                    typingDiv.remove(); 
+
+                    const botDiv = document.createElement("div");
+                    botDiv.classList.add("bot");
+
+                    if (response.status === 429 || (data.error && data.error.includes("quota"))) {
+                        botDiv.textContent = "Daily free quota reached. Please try again tomorrow after 5:30 AM IST.";
+                    } else {
+                        botDiv.textContent = data.reply || `Error: ${data.error}`;
+                    }
+
+                    chatBox.appendChild(botDiv);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+
+                } catch (err) {
+                    typingDiv.remove();
+                    const botDiv = document.createElement("div");
+                    botDiv.classList.add("bot");
+                    botDiv.textContent = `Error: ${err.message}`;
+                    chatBox.appendChild(botDiv);
+                }
+            }
+
+            sendBtn.addEventListener("click", sendMessage);
+            input.addEventListener("keypress", (e) => {
+                if (e.key === "Enter") sendMessage();
+            });
+        });
+    </script>
+</body>
+</html>
